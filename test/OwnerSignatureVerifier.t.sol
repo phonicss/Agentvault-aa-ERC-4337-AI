@@ -3,6 +3,7 @@ pragma solidity ^0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {OwnerSignatureVerifier} from "../src/OwnerSignatureVerifier.sol";
+import {ZeroAddress} from "../src/OwnerSignatureVerifier.sol";
 
 contract OwnerSignatureVerifierTest is Test {
     OwnerSignatureVerifier verifier;
@@ -39,5 +40,17 @@ contract OwnerSignatureVerifierTest is Test {
         bytes memory signature = abi.encodePacked(r, s, v);
         bool result = verifier.isValidOwnerSignature(digestB, signature);
         assertFalse(result);
+    }
+
+    function testRejectsMalformedSignature() public view {
+        bytes32 digest = keccak256("10USDT");
+        bytes memory invalidSignature = hex"010203";
+        bool result = verifier.isValidOwnerSignature(digest, invalidSignature);
+        assertFalse(result);
+    }
+
+    function testRejectsZeroOwner() public {
+        vm.expectRevert(ZeroAddress.selector);
+        new OwnerSignatureVerifier(address(0));
     }
 }

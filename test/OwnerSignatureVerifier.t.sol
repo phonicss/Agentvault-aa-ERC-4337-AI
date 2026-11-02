@@ -12,7 +12,7 @@ contract OwnerSignatureVerifierTest is Test {
 
     function setUp() public {
         address alice = vm.addr(alicePrivateKey);
-        address bob = vm.addr(bobPrivateKey);
+        //address bob = vm.addr(bobPrivateKey);
         verifier = new OwnerSignatureVerifier(address(alice));
     }
 
@@ -24,11 +24,20 @@ contract OwnerSignatureVerifierTest is Test {
         assertTrue(result);
     }
 
-    function testInvalidOwnerSignature() public {
+    function testInvalidOwnerSignature() public view {
         bytes32 digest = keccak256("124343382744744");
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(bobPrivateKey, digest);
         bytes memory signature = abi.encodePacked(r, s, v);
         bool result = verifier.isValidOwnerSignature(digest, signature);
+        assertFalse(result);
+    }
+
+    function testRejectsModifiedDigest() public view {
+        bytes32 digestA = keccak256("100USDT");
+        bytes32 digestB = keccak256("1000USDT");
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(alicePrivateKey, digestA);
+        bytes memory signature = abi.encodePacked(r, s, v);
+        bool result = verifier.isValidOwnerSignature(digestB, signature);
         assertFalse(result);
     }
 }
